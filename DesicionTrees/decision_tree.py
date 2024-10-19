@@ -83,19 +83,17 @@ res = features_importance_df
 
 #Визуализация дерева
 plot_tree(model,feature_names=X.columns,filled=True)
-plt.clf()
 
 #Гиперпараметр - Макс количество уровней дерева
 pruned_tree = DecisionTreeClassifier(max_depth=2)
 pruned_tree.fit(X_train,y_train)
 plot_tree(pruned_tree,feature_names=X.columns,filled=True)
-plt.clf()
 
 
 #Гиперпараметр - Максимальное количество листовых узлов
 max_leaf_tree = DecisionTreeClassifier(max_leaf_nodes=3)
 max_leaf_tree.fit(X_train,y_train)
-plot_tree(max_leaf_tree,feature_names=X.columns,filled=True)
+# plot_tree(max_leaf_tree,feature_names=X.columns,filled=True)
 
 
 print(res)
