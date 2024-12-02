@@ -4,11 +4,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, classification_report
+from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
-
-from CrossValidation.Grid_Search import param_grid
+from sklearn.metrics import ConfusionMatrixDisplay
 
 res = ''
 
@@ -77,19 +77,61 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_
 #endregion
 #region Создание стоковых элементов для Pipeline
 scaler = StandardScaler()
-est = LogisticRegression
+est = LogisticRegression()
 
 #endregion
 #region Создание Pipeline
 
 operations = [('scaler',scaler)
               ,('est',est)]
-pipeline = Pipeline(operations=operations)
+pipeline = Pipeline(operations)
 
 #endregion
 #region Создание GridSearchCV
 
-param_grid = []
+param_grid = {'est__penalty':['l1','l2']
+              ,'est__C':[0.1,0.3,0.5,0.8,1.3,2.1,3.4,5.5]
+              ,'est__solver':['liblinear']}
+p_grid_model = GridSearchCV(estimator=pipeline
+                                ,param_grid=param_grid
+                                , scoring='f1_weighted'
+                                , verbose=2
+                                , cv=10)
+
+#endregion
+#region Обучение
+
+p_grid_model.fit(X_train,y_train)
+res = p_grid_model.best_estimator_.get_params()
+
+#endregion
+#region Оценка
+
+y_pred = p_grid_model.predict(X_test)
+
+#Матрица ошибок
+# [[12  3]
+ # [ 2 14]]
+confM = confusion_matrix(y_test,y_pred)
+
+#Визуализация матрицы ошибок
+# ConfusionMatrixDisplay(confusion_matrix(y_pred, y_test)).plot()
+
+#Отчет по метрикам
+#               precision    recall  f1-score   support
+#
+#            0       0.86      0.80      0.83        15
+#            1       0.82      0.88      0.85        16
+#
+#     accuracy                           0.84        31
+#    macro avg       0.84      0.84      0.84        31
+# weighted avg       0.84      0.84      0.84        31
+metricsRep = classification_report(y_test,y_pred)
+res = metricsRep
+
+
+
+
 
 #endregion
 
