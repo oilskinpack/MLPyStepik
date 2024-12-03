@@ -129,6 +129,34 @@ confM = confusion_matrix(y_test,y_pred)
 metricsRep = classification_report(y_test,y_pred)
 res = metricsRep
 
+#График Precision Recall Curve
+from sklearn.metrics import PrecisionRecallDisplay
+PrecisionRecallDisplay.from_estimator(p_grid_model, X_test, y_test)
+
+#Проверка нового пациента
+# age          54.0
+# sex           1.0
+# cp            0.0
+# trestbps    122.0
+# chol        286.0
+# fbs           0.0
+# restecg       0.0
+# thalach     116.0
+# exang         1.0
+# oldpeak       3.2
+# slope         1.0
+# ca            2.0
+# thal          2.0
+X_new = [[ 54. ,   1. ,   0. , 122. , 286. ,   0. ,   0. , 116. ,   1. ,
+          3.2,   1. ,   2. ,   2. ]]
+
+#Предсказание - 0 (не болен)
+y_pred_new = p_grid_model.predict(X_new)
+
+#Вероятность - [[0.98895523 0.01104477]]
+y_pred_new_proba = p_grid_model.predict_proba(X_new)
+res = y_pred_new_proba
+
 
 
 
