@@ -112,7 +112,7 @@ res = df.isnull().sum()
 #region Распределение колонки TotalCharges (общей суммы расходов) в зависимости от оттока
 
 #Через виолинплот - оптимал
-sns.violinplot(data=df,y='TotalCharges',x='Churn',palette='Set2')
+# sns.violinplot(data=df,y='TotalCharges',x='Churn',palette='Set2')
 
 #Через боксплот
 # sns.boxplot(data=df,y='TotalCharges',x='Churn',palette='Set2')
@@ -120,6 +120,45 @@ sns.violinplot(data=df,y='TotalCharges',x='Churn',palette='Set2')
 #Через свамплот - не стоит, оч много точек
 # sns.swarmplot(data=df,y='TotalCharges',x='Churn',palette='Set2',size=1)
 
+
+#endregion
+#region Распределение колонки TotalCharges для различных типов контрактов в зависимости от оттока
+
+# sns.boxplot(data=df,x='Contract',y='TotalCharges',hue='Churn',palette='Set2')
+
+#endregion
+#region Корреляция категориальных колонок с целевой переменной
+
+cols = ['gender', 'SeniorCitizen', 'Partner', 'Dependents','PhoneService', 'MultipleLines',
+     'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'InternetService',
+       'StreamingTV', 'StreamingMovies', 'Contract', 'PaperlessBilling', 'PaymentMethod','Churn']
+df_dummy = df[cols]
+df_dummy = pd.get_dummies(df_dummy,drop_first=False,dtype=int)
+
+
+df_dummy = df_dummy.corr().sort_values('Churn_Yes',ascending=True).reset_index()
+res = df_dummy
+# sns.barplot(data=df_dummy,y='Churn_Yes',x='index',palette='Set2')
+# plt.xticks(rotation=90)
+
+#endregion
+
+
+#endregion
+#region Анализ оттока
+
+#region Просмотр возможных типов контрактов
+
+# Contract
+# Month-to-month    3875
+# Two year          1685
+# One year          1472
+res = df['Contract'].value_counts()
+
+#endregion
+#region Гистограмма по колонке tenure - сколько месяцев являлся абонетном
+
+# sns.displot(data=df,x='tenure',bins=60)
 
 #endregion
 
