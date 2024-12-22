@@ -161,6 +161,66 @@ res = df['Contract'].value_counts()
 # sns.displot(data=df,x='tenure',bins=60)
 
 #endregion
+#region Гистограмма по колонке tenure - c разбитием по Churn и Contract
+
+# plt.figure(figsize=(10,3),dpi=200)
+# sns.displot(data=df,x='tenure',bins=70,col='Contract',row='Churn')
+
+#endregion
+#region Диаграмма с данными по Total Charges и Monthly Charges
+
+# sns.scatterplot(data=df,x='MonthlyCharges',y='TotalCharges',hue='Churn',palette='Set2')
+
+#endregion
+#region Процент оттока людей для каждого tenure
+
+# no_churn = df.groupby(['Churn','tenure']).count().transpose()['No']
+no_churn = df.groupby(['Churn','tenure']).count().transpose()['No']
+yes_churn = df.groupby(['Churn','tenure']).count().transpose()['Yes']
+
+churn_rate = (yes_churn)/(no_churn + yes_churn) * 100
+churn_rate = churn_rate.transpose()['customerID']
+
+#endregion
+#region График процента оттока в зависимости от tenure (кол-ва месяцев)
+
+# churn_rate.plot()
+# plt.ylabel('Кол-во месяцев')
+
+#endregion
+#region Построение более крупных когорт
+
+def cohorting(month_total):
+    res = ''
+    if(month_total <= 12):
+        res = '0-12 Months'
+    elif(month_total <= 24):
+        res = '13-24 Months'
+    elif (month_total <= 48):
+        res = '25-48 Months'
+    else:
+        res = 'Over 48 Months'
+    return  res
+
+df['Tenure Cohort'] = df['tenure'].apply(cohorting)
+
+#endregion
+#region Диаграмма с данными по Total Charges и Monthly Charges c разбивкой по большим когортам
+
+# sns.scatterplot(data=df,x='MonthlyCharges',y='TotalCharges',hue='Tenure Cohort',palette='Set2')
+
+#endregion
+#region Проверка процента ушедших в когорте
+
+# sns.countplot(data=df,x='Tenure Cohort',hue='Churn',palette='Set2')
+
+#endregion
+#region Подсчет количества людей в оттоке с разбиквой по когортам и типу контракта
+
+# plt.figure(figsize=(10,3),dpi=200)
+sns.catplot(data=df,x='Tenure Cohort',hue='Churn',col='Contract',kind='count')
+
+#endregion
 
 #endregion
 
