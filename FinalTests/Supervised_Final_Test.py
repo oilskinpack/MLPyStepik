@@ -2,7 +2,11 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
+from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
 
 pd.set_option('display.max_rows', 30)
 pd.set_option('display.max_columns', 30)
@@ -218,13 +222,101 @@ df['Tenure Cohort'] = df['tenure'].apply(cohorting)
 #region Подсчет количества людей в оттоке с разбиквой по когортам и типу контракта
 
 # plt.figure(figsize=(10,3),dpi=200)
-sns.catplot(data=df,x='Tenure Cohort',hue='Churn',col='Contract',kind='count')
+# sns.catplot(data=df,x='Tenure Cohort',hue='Churn',col='Contract',kind='count')
 
 #endregion
 
 #endregion
 
+#region Создание обучающей модели
 
+#region Деление признаков
+
+y = df['Churn']
+X = df.drop(columns=['customerID','Churn'],axis=1)
+X = pd.get_dummies(X,drop_first=True,dtype=int)
+
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.1, random_state=101)
+
+#endregion
+#region Определение важности признаков на дефолтном дереве
+
+#Создание алгоритма
+model = DecisionTreeClassifier()
+#Обучение
+model.fit(X_train,y_train)
+#Предсказания
+base_pred = model.predict(X_test)
+
+#Матрица
+# [[440 117]
+#  [ 72  75]]
+print(confusion_matrix(y_test,base_pred))
+# ConfusionMatrixDisplay(confusion_matrix(base_pred, y_test)).plot()
+
+
+#Интерпретация модели - самые важные признаки
+coefs = model.feature_importances_
+coef_columns = X.columns
+features_importance_df = (pd.DataFrame(data=coefs,index=coef_columns,columns=['Важность признаков'])
+                          .sort_values('Важность признаков',ascending=False))
+# res = features_importance_df.nlargest(columns='Важность признаков',n=10)
+
+
+#                                 Важность признаков
+# tenure                                    0.204787
+# TotalCharges                              0.202170
+# MonthlyCharges                            0.197552
+# InternetService_Fiber optic               0.108663
+# PaperlessBilling_Yes                      0.021547
+# PaymentMethod_Electronic check            0.020931
+# gender_Male                               0.020737
+# SeniorCitizen                             0.018856
+# Partner_Yes                               0.018279
+# OnlineBackup_Yes                          0.017765
+
+#endregion
+#region Создание модели на основе простого дерева
+
+scaler = StandardScaler()
+est = DecisionTreeClassifier()
+operations = [('scaler',scaler),('est',est)]
+pipe = Pipeline(steps=operations)
+pipe.fit(X_train,y_train)
+
+leafs = [1,2,3,4,5]
+depth = [1,2,3,4,5,6,7,8,9,10]
+best_leafs = [5]
+best_depth = [10]
+best_max_f = ['sqrt']
+param_grid = {'est__max_leaf_nodes':best_leafs
+              ,'est__max_features' : best_max_f
+              ,'est__max_depth':best_depth}
+grid_model = GridSearchCV(estimator=pipe
+                          ,param_grid=param_grid
+                          ,return_train_score=True
+                          ,scoring='recall'
+                          ,verbose=2
+                          ,cv=10)
+grid_model.fit(X_train,y_train)
+
+y_pred = grid_model.predict(X_test)
+
+#Лучшие параметры - max_depth=2, max_leaf_nodes=3
+res = grid_model.best_estimator_.get_params()
+
+#Матрица
+# [[466  91]
+#  [ 66  81]]
+print(confusion_matrix(y_test,y_pred))
+
+#Визуализация дерева
+plot_tree(pipe['est'],feature_names=pipe[:1].get_feature_names_out(), filled=True)
+res = pipe[:1].get_feature_names_out()
+
+#endregion
+
+#endregion
 
 
 print(res)
