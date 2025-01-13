@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier, GradientBoostingClassifier
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, classification_report
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.tree import DecisionTreeClassifier, plot_tree
@@ -298,21 +299,155 @@ grid_model = GridSearchCV(estimator=pipe
                           ,scoring='recall'
                           ,verbose=2
                           ,cv=10)
-grid_model.fit(X_train,y_train)
-
-y_pred = grid_model.predict(X_test)
+# grid_model.fit(X_train,y_train)
+# y_pred = grid_model.predict(X_test)
 
 #Лучшие параметры - max_depth=2, max_leaf_nodes=3
-res = grid_model.best_estimator_.get_params()
+# res = grid_model.best_estimator_.get_params()
 
 #Матрица
 # [[466  91]
 #  [ 66  81]]
-print(confusion_matrix(y_test,y_pred))
+# print(confusion_matrix(y_test,y_pred))
 
 #Визуализация дерева
-plot_tree(pipe['est'],feature_names=pipe[:1].get_feature_names_out(), filled=True)
-res = pipe[:1].get_feature_names_out()
+# plot_tree(pipe['est'],feature_names=pipe[:1].get_feature_names_out(), filled=True)
+# res = pipe[:1].get_feature_names_out()
+
+#endregion
+#region Создание модели на основе случайного леса
+
+est = RandomForestClassifier()
+operations = [('est',est)]
+pipe = Pipeline(steps=operations)
+pipe.fit(X_train,y_train)
+
+n_estimators = [60,65,70]
+max_f = ['auto','sqrt']
+best_n_est = [60]
+best_max_f = ['auto']
+param_grid = {'est__n_estimators':best_n_est
+              ,'est__max_features' : best_max_f}
+grid_model = GridSearchCV(estimator=pipe
+                          ,param_grid=param_grid
+                          ,return_train_score=True
+                          ,scoring='recall'
+                          ,verbose=2
+                          ,cv=10)
+
+# grid_model.fit(X_train,y_train)
+# y_pred = grid_model.predict(X_test)
+
+#Лучшие параметры - (max_features='auto', n_estimators=60)
+# res = grid_model.best_estimator_.get_params()
+
+#Матрица
+# [[491  66]
+#  [ 83  64]]
+# print(confusion_matrix(y_test,y_pred))
+
+#Вывод матрицы
+# ConfusionMatrixDisplay(confusion_matrix(y_pred, y_test)).plot()
+
+#Репорт
+#               precision    recall  f1-score   support
+#
+#           No       0.86      0.89      0.87       557
+#          Yes       0.52      0.44      0.48       147
+#
+#     accuracy                           0.80       704
+#    macro avg       0.69      0.67      0.68       704
+# weighted avg       0.79      0.80      0.79       704
+# print(classification_report(y_test,y_pred))
+
+
+#endregion
+#region Создание модели на основе адаптивного бустинга
+
+est = AdaBoostClassifier()
+operations = [('est',est)]
+pipe = Pipeline(steps=operations)
+pipe.fit(X_train,y_train)
+
+n_estimators = [5,10,20,30,40,50]
+best_n_est = [60]
+param_grid = {'est__n_estimators':n_estimators}
+grid_model = GridSearchCV(estimator=pipe
+                          ,param_grid=param_grid
+                          ,return_train_score=True
+                          ,scoring='recall'
+                          ,verbose=2
+                          ,cv=10)
+
+# grid_model.fit(X_train,y_train)
+# y_pred = grid_model.predict(X_test)
+
+#Лучшие параметры - (max_features='auto', n_estimators=60)
+# res = grid_model.best_estimator_.get_params()
+
+#Матрица
+# [[523  34]
+#  [ 97  50]]
+# print(confusion_matrix(y_test,y_pred))
+
+#Вывод матрицы
+# ConfusionMatrixDisplay(confusion_matrix(y_pred, y_test)).plot()
+
+#Репорт
+#               precision    recall  f1-score   support
+#
+#           No       0.84      0.94      0.89       557
+#          Yes       0.60      0.34      0.43       147
+#
+#     accuracy                           0.81       704
+#    macro avg       0.72      0.64      0.66       704
+# weighted avg       0.79      0.81      0.79       704
+# print(classification_report(y_test,y_pred))
+
+
+
+#endregion
+#region Создание модели на основе градиентного бустинга
+
+est = GradientBoostingClassifier()
+operations = [('est',est)]
+pipe = Pipeline(steps=operations)
+pipe.fit(X_train,y_train)
+
+param_grid = {'est__n_estimators':[50,100],
+              'est__learning_rate':[0.1,0.05,0.2],
+              'est__max_depth':[3,4,5]}
+grid_model = GridSearchCV(estimator=pipe
+                          ,param_grid=param_grid
+                          ,return_train_score=True
+                          ,scoring='recall'
+                          ,verbose=2
+                          ,cv=10)
+
+grid_model.fit(X_train,y_train)
+y_pred = grid_model.predict(X_test)
+
+#Лучшие параметры - (max_features='auto', n_estimators=60)
+res = grid_model.best_estimator_.get_params()
+
+#Матрица
+# [[509  48]
+#  [ 76  71]]
+print(confusion_matrix(y_test,y_pred))
+
+#Вывод матрицы
+ConfusionMatrixDisplay(confusion_matrix(y_pred, y_test)).plot()
+
+#Репорт
+#               precision    recall  f1-score   support
+#
+#           No       0.87      0.91      0.89       557
+#          Yes       0.60      0.48      0.53       147
+#
+#     accuracy                           0.82       704
+#    macro avg       0.73      0.70      0.71       704
+# weighted avg       0.81      0.82      0.82       704
+print(classification_report(y_test,y_pred))
 
 #endregion
 
